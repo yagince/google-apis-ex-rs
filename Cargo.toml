@@ -4,10 +4,27 @@ version = "0.1.0"
 edition = "2021"
 publish = false
 
+[workspace]
+members = [
+  "example",
+]
+
+[lib]
+doctest = false
+
 [dependencies]
+gcp_auth = "0.5.0"
 prost = "0.9.0"
 prost-types = "0.9.0"
-tonic = "0.6.1"
+reqwest = { version = "0.11.6", features = ["json"] }
+serde_json = "1.0.72"
+tonic = { version = "0.6.1", features = ["tls", "compression"] }
+url = "2.2.2"
+
+[dev-dependencies]
+anyhow = "*"
+pretty_assertions = "*"
+rstest = "*"
 
 [build-dependencies]
 tonic-build = "0.6.0"

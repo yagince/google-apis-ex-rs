@@ -1,3 +1,5 @@
+// pub(crate) const CERT: &[u8] = include_bytes!("google.pem");
+
 pub mod google {
     pub mod api {
         include!("proto/google.api.rs");
