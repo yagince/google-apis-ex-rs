@@ -1,4 +1,4 @@
-// pub(crate) const CERT: &[u8] = include_bytes!("google.pem");
+pub(crate) const TLS_CERT: &[u8] = include_bytes!("google.pem");
 
 pub mod google {
     pub mod api {
@@ -15,6 +15,13 @@ pub mod google {
     pub mod storage {
         pub mod v2 {
             include!("proto/google.storage.v2.rs");
+        }
+    }
+    pub mod cloud {
+        pub mod kms {
+            pub mod v1 {
+                include!("proto/google.cloud.kms.v1.rs");
+            }
         }
     }
 }
