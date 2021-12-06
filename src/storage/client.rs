@@ -5,6 +5,8 @@ use crate::{
     error::{AuthError, Error},
 };
 
+use super::object::ObjectResource;
+
 const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
 const SCOPES: [&str; 2] = [
     "https://www.googleapis.com/auth/cloud-platform",
@@ -44,6 +46,41 @@ impl Client {
             .await?;
         if res.status().is_success() {
             Ok(res.bytes().await?.to_vec())
+        } else {
+            Err(CloudStorageError::ErrorResponse {
+                status: res.status(),
+                response: res.text().await?,
+            }
+            .into())
+        }
+    }
+
+    pub async fn create_object(
+        &mut self,
+        bucket: &str,
+        name: &str,
+        object: impl Into<Vec<u8>>,
+        mime_type: impl AsRef<str>,
+    ) -> Result<ObjectResource, Error> {
+        let url = Self::build_uri(bucket, Some(""))?;
+        let data = object.into();
+
+        let res = self
+            .http
+            .post(url)
+            .query(&[
+                // cf. https://cloud.google.com/storage/docs/json_api/v1/objects/insert#parameters
+                ("uploadType", "media"),
+                ("name", name),
+            ])
+            .headers(self.headers().await?)
+            .header("content-type", mime_type.as_ref())
+            .header("content-length", data.len())
+            .body(data)
+            .send()
+            .await?;
+        if res.status().is_success() {
+            Ok(res.json().await?)
         } else {
             Err(CloudStorageError::ErrorResponse {
                 status: res.status(),
@@ -95,6 +132,11 @@ mod tests {
         "test-bucket",
         Some("hoge/foo/bar.yaml"),
         "https://storage.googleapis.com/storage/v1/b/test-bucket/o/hoge%2Ffoo%2Fbar.yaml"
+    )]
+    #[case(
+        "test-bucket",
+        Some(""),
+        "https://storage.googleapis.com/storage/v1/b/test-bucket/o/"
     )]
     #[case(
         "test-bucket",
