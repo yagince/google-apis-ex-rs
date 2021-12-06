@@ -9,7 +9,8 @@ use crate::{
     error::Error,
     proto::{
         google::cloud::kms::v1::{
-            key_management_service_client::KeyManagementServiceClient, ListCryptoKeysRequest,
+            key_management_service_client::KeyManagementServiceClient, DecryptRequest,
+            DecryptResponse, EncryptRequest, EncryptResponse, ListCryptoKeysRequest,
             ListCryptoKeysResponse, ListKeyRingsRequest, ListKeyRingsResponse,
         },
         TLS_CERT,
@@ -98,6 +99,56 @@ impl KmsClient {
         .await?;
 
         let response = self.client.list_crypto_keys(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// # Arguments
+    /// * `key_name` - in the format `projects/*/locations/*/keyRings/*/cryptoKeys/*`
+    /// * `data`     - to be encrypted.
+    pub async fn encrypt(
+        &mut self,
+        key_name: &str,
+        data: Vec<u8>,
+    ) -> Result<EncryptResponse, Error> {
+        let request = Self::construct_request(
+            self,
+            EncryptRequest {
+                name: key_name.to_owned(),
+                plaintext: data,
+                additional_authenticated_data: vec![],
+                plaintext_crc32c: None,
+                additional_authenticated_data_crc32c: None,
+            },
+            vec![("name", key_name)],
+        )
+        .await?;
+
+        let response = self.client.encrypt(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// # Arguments
+    /// * `key_name` - in the format `projects/*/locations/*/keyRings/*/cryptoKeys/*`
+    /// * `data`     - to be decrypted.
+    pub async fn decrypt(
+        &mut self,
+        key_name: &str,
+        data: Vec<u8>,
+    ) -> Result<DecryptResponse, Error> {
+        let request = Self::construct_request(
+            self,
+            DecryptRequest {
+                name: key_name.to_owned(),
+                ciphertext: data,
+                additional_authenticated_data: vec![],
+                ciphertext_crc32c: None,
+                additional_authenticated_data_crc32c: None,
+            },
+            vec![("name", key_name)],
+        )
+        .await?;
+
+        let response = self.client.decrypt(request).await?;
         Ok(response.into_inner())
     }
 }
