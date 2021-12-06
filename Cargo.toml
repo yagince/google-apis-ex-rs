@@ -17,7 +17,9 @@ gcp_auth = "0.5.0"
 prost = "0.9.0"
 prost-types = "0.9.0"
 reqwest = { version = "0.11.6", features = ["json"] }
+serde = { version = "1.0.130", features = ["derive"] }
 serde_json = "1.0.72"
+thiserror = "1.0.30"
 tonic = { version = "0.6.1", features = ["tls", "compression"] }
 url = "2.2.2"
 

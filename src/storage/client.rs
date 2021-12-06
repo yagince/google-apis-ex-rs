@@ -7,6 +7,12 @@ const SCOPES: [&str; 2] = [
     "https://www.googleapis.com/auth/devstorage.full_control",
 ];
 
+#[derive(thiserror::Error, Debug)]
+pub enum CloudStorageError {
+    #[error("{0:?}")]
+    ErrorResponse(String),
+}
+
 pub struct Client {
     token: Token,
     http: reqwest::Client,
