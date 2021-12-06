@@ -27,6 +27,7 @@ url = "2.2.2"
 anyhow = "*"
 pretty_assertions = "*"
 rstest = "*"
+tokio = { version = "*", features = ["full"] }
 
 [build-dependencies]
 tonic-build = "0.6.0"

@@ -10,6 +10,9 @@ pub enum Error {
     /// An error with the gRPC transport channel.
     #[error("transport error: {0}")]
     Transport(#[from] tonic::transport::Error),
+    /// An error with the gRPC metadata value.
+    #[error("metadata parse error: {0}")]
+    InvalidMetadata(#[from] tonic::metadata::errors::InvalidMetadataValue),
     /// An IO error.
     #[error("IO error: {0}")]
     IO(#[from] io::Error),

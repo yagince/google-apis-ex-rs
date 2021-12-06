@@ -31,11 +31,11 @@ struct Kms {
 
 #[derive(Parser)]
 enum KmsCommands {
-    ListKeys(KmsListKeys),
+    ListKeyRings(KmsListKeyRings),
 }
 
 #[derive(Parser)]
-struct KmsListKeys {
+struct KmsListKeyRings {
     #[clap(short, long)]
     parent: String,
 }
@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
         SubCommands::Kms(opts) => match opts.subcmd {
-            KmsCommands::ListKeys(opts) => {
+            KmsCommands::ListKeyRings(opts) => {
                 let mut client = KmsClient::new().await?;
                 dbg!(client.list_key_rings(&opts.parent).await?);
             }
