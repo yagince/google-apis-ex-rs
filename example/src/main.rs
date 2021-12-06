@@ -19,6 +19,8 @@ struct Storage {
     bucket: String,
     #[clap(short, long)]
     object_id: String,
+    #[clap(long)]
+    output: Option<String>,
 }
 
 #[derive(Parser)]
@@ -45,7 +47,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     match opts.subcmd {
         SubCommands::Storage(opts) => {
             let client = Client::new().await?;
-            dbg!(client.object(&opts.bucket, &opts.object_id).await?);
+            let data = client.object(&opts.bucket, &opts.object_id).await?;
+
+            if let Some(output_path) = opts.output {
+                std::fs::write(output_path, data)?;
+            } else {
+                dbg!(data);
+            }
         }
         SubCommands::Kms(opts) => match opts.subcmd {
             KmsCommands::ListKeys(opts) => {
