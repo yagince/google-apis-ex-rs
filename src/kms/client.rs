@@ -112,13 +112,13 @@ impl KmsClient {
     pub async fn encrypt(
         &mut self,
         key_name: &str,
-        data: Vec<u8>,
+        data: impl Into<Vec<u8>>,
     ) -> Result<EncryptResponse, Error> {
         let request = Self::construct_request(
             self,
             EncryptRequest {
                 name: key_name.to_owned(),
-                plaintext: data,
+                plaintext: data.into(),
                 additional_authenticated_data: vec![],
                 plaintext_crc32c: None,
                 additional_authenticated_data_crc32c: None,
@@ -137,13 +137,13 @@ impl KmsClient {
     pub async fn decrypt(
         &mut self,
         key_name: &str,
-        data: Vec<u8>,
+        data: impl Into<Vec<u8>>,
     ) -> Result<DecryptResponse, Error> {
         let request = Self::construct_request(
             self,
             DecryptRequest {
                 name: key_name.to_owned(),
-                ciphertext: data,
+                ciphertext: data.into(),
                 additional_authenticated_data: vec![],
                 ciphertext_crc32c: None,
                 additional_authenticated_data_crc32c: None,

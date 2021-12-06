@@ -76,9 +76,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             KmsCommands::Encrypt(opts) => {
                 let mut client = KmsClient::new().await?;
-                let res = client
-                    .encrypt(&opts.key, opts.data.as_bytes().to_vec())
-                    .await?;
+                let res = client.encrypt(&opts.key, opts.data.as_bytes()).await?;
 
                 println!("encrypt success.");
 
