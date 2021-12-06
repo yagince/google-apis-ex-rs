@@ -1,5 +1,5 @@
 use gcp_auth::Token;
-use reqwest::{header::HeaderMap, Url};
+use reqwest::{header::HeaderMap, StatusCode, Url};
 
 const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
 const SCOPES: [&str; 2] = [
@@ -9,8 +9,11 @@ const SCOPES: [&str; 2] = [
 
 #[derive(thiserror::Error, Debug)]
 pub enum CloudStorageError {
-    #[error("{0:?}")]
-    ErrorResponse(String),
+    #[error("Status: {status:?} Res: {response}")]
+    ErrorResponse {
+        status: StatusCode,
+        response: String,
+    },
 }
 
 pub struct Client {
@@ -39,11 +42,16 @@ impl Client {
             .headers(self.headers())
             .query(&[("alt", "media")])
             .send()
-            .await?
-            .bytes()
-            .await?
-            .to_vec();
-        Ok(res)
+            .await?;
+        if res.status().is_success() {
+            Ok(res.bytes().await?.to_vec())
+        } else {
+            Err(CloudStorageError::ErrorResponse {
+                status: res.status(),
+                response: res.text().await?,
+            }
+            .into())
+        }
     }
 
     fn build_uri<T: AsRef<str>>(bucket: &str, object: Option<T>) -> Result<Url, url::ParseError> {
