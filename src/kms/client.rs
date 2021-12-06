@@ -9,8 +9,8 @@ use crate::{
     error::Error,
     proto::{
         google::cloud::kms::v1::{
-            key_management_service_client::KeyManagementServiceClient, ListKeyRingsRequest,
-            ListKeyRingsResponse,
+            key_management_service_client::KeyManagementServiceClient, ListCryptoKeysRequest,
+            ListCryptoKeysResponse, ListKeyRingsRequest, ListKeyRingsResponse,
         },
         TLS_CERT,
     },
@@ -74,6 +74,30 @@ impl KmsClient {
         .await?;
 
         let response = self.client.list_key_rings(request).await?;
+        Ok(response.into_inner())
+    }
+
+    /// # Arguments
+    /// * `parent` - in the format `projects/*/locations/*/keyRings/*`
+    pub async fn list_crypto_keys(
+        &mut self,
+        parent: &str,
+    ) -> Result<ListCryptoKeysResponse, Error> {
+        let request = Self::construct_request(
+            self,
+            ListCryptoKeysRequest {
+                parent: parent.to_owned(),
+                page_size: 100,
+                page_token: Default::default(),
+                filter: Default::default(),
+                order_by: Default::default(),
+                version_view: 0,
+            },
+            vec![("parent", parent)],
+        )
+        .await?;
+
+        let response = self.client.list_crypto_keys(request).await?;
         Ok(response.into_inner())
     }
 }
