@@ -1,6 +1,9 @@
 use reqwest::{header::HeaderMap, StatusCode, Url};
 
-use crate::{auth::TokenManager, error::AuthError};
+use crate::{
+    auth::TokenManager,
+    error::{AuthError, Error},
+};
 
 const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
 const SCOPES: [&str; 2] = [
@@ -30,11 +33,7 @@ impl Client {
         })
     }
 
-    pub async fn object(
-        &mut self,
-        bucket: &str,
-        object: &str,
-    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+    pub async fn object(&mut self, bucket: &str, object: &str) -> Result<Vec<u8>, Error> {
         let url = Self::build_uri(bucket, Some(object))?;
         let res = self
             .http

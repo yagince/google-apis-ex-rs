@@ -1,6 +1,8 @@
 use std::env;
 use std::io;
 
+use crate::storage::client::CloudStorageError;
+
 /// The main error-handling type.
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -20,7 +22,6 @@ pub enum Error {
     #[error("environment error: {0}")]
     Env(#[from] env::VarError),
     /// Reqwest error (HTTP errors).
-    #[cfg(feature = "storage")]
     #[error("HTTP error: {0}")]
     Reqwest(#[from] reqwest::Error),
     /// conversion error (`try_from(..)` or `try_into(..)` errors).
@@ -29,6 +30,12 @@ pub enum Error {
     /// authentication-related error.
     #[error("authentication error: {0}")]
     Auth(#[from] AuthError),
+    /// url error.
+    #[error("url error: {0}")]
+    Url(#[from] url::ParseError),
+    /// cloud storage API error.
+    #[error("cloud storage api error: {0}")]
+    CloudStorage(#[from] CloudStorageError),
 }
 
 /// The error type for value conversions.
