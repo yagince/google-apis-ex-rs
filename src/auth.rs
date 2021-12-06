@@ -17,24 +17,21 @@ impl TokenManager {
         })
     }
 
-    pub async fn get_token(&mut self) -> Result<Token, AuthError> {
+    pub async fn get_token(&mut self) -> Result<&Token, AuthError> {
         match &self.token {
             None => {
                 let token = self._get_token().await?;
-                self.token = Some(token.clone());
-                Ok(token)
+                self.token = Some(token);
             }
             Some(current_token) => {
-                let token = if current_token.has_expired() {
+                if current_token.has_expired() {
                     let token = self._get_token().await?;
-                    self.token = Some(token.clone());
-                    token
-                } else {
-                    current_token.clone()
-                };
-                Ok(token)
+                    self.token = Some(token);
+                }
             }
         }
+
+        Ok(self.token.as_ref().unwrap())
     }
 
     async fn _get_token(&mut self) -> Result<Token, AuthError> {
