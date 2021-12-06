@@ -12,4 +12,8 @@
 protodep up
 ```
 
-## Build
+## Authentication
+
+Please check the following library specifications
+
+[hrvolapeter/gcp_auth: Minimal authentication library for Google Cloud Platform (GCP)](https://github.com/hrvolapeter/gcp_auth)
