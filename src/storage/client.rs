@@ -7,7 +7,7 @@ use crate::{
 
 use super::object::ObjectResource;
 
-const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
+const ENDPOINT: &str = "https://storage.googleapis.com/storage/v1";
 const SCOPES: [&str; 2] = [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/devstorage.full_control",

@@ -16,9 +16,9 @@ use crate::{
     },
 };
 
-pub const DOMAIN_NAME: &'static str = "cloudkms.googleapis.com";
-pub const ENDPOINT: &'static str = "https://cloudkms.googleapis.com";
-pub const SCOPES: [&'static str; 2] = [
+pub const DOMAIN_NAME: &str = "cloudkms.googleapis.com";
+pub const ENDPOINT: &str = "https://cloudkms.googleapis.com";
+pub const SCOPES: [&str; 2] = [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/cloudkms",
 ];
