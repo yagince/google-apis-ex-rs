@@ -1,11 +1,10 @@
-use gcp_auth::Token;
 use tonic::{
     transport::{Certificate, Channel, ClientTlsConfig},
     IntoRequest, Request,
 };
 
 use crate::{
-    auth::get_token,
+    auth::TokenManager,
     error::Error,
     proto::{
         google::cloud::kms::v1::{
@@ -25,14 +24,14 @@ pub const SCOPES: [&'static str; 2] = [
 ];
 
 pub struct KmsClient {
-    token: Token,
+    token_manager: TokenManager,
     client: KeyManagementServiceClient<Channel>,
 }
 
 impl KmsClient {
     pub async fn new() -> Result<Self, Error> {
         Ok(Self {
-            token: get_token(&SCOPES).await?,
+            token_manager: TokenManager::new(&SCOPES).await?,
             client: Self::kms_client().await?,
         })
     }
@@ -51,11 +50,16 @@ impl KmsClient {
     }
 
     pub(crate) async fn construct_request<T: IntoRequest<T>>(
-        &self,
+        &mut self,
         request: T,
         headers: Vec<(&str, &str)>,
     ) -> Result<Request<T>, Error> {
-        construct_request(request, self.token.as_str(), headers).await
+        construct_request(
+            request,
+            self.token_manager.get_token().await?.as_str(),
+            headers,
+        )
+        .await
     }
 
     /// # Arguments

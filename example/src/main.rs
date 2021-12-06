@@ -56,7 +56,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     match opts.subcmd {
         SubCommands::Storage(opts) => {
-            let client = Client::new().await?;
+            let mut client = Client::new().await?;
             let data = client.object(&opts.bucket, &opts.object_id).await?;
 
             if let Some(output_path) = opts.output {

@@ -1,5 +1,6 @@
-use gcp_auth::Token;
 use reqwest::{header::HeaderMap, StatusCode, Url};
+
+use crate::{auth::TokenManager, error::AuthError};
 
 const ENDPOINT: &'static str = "https://storage.googleapis.com/storage/v1";
 const SCOPES: [&str; 2] = [
@@ -17,21 +18,20 @@ pub enum CloudStorageError {
 }
 
 pub struct Client {
-    token: Token,
+    token_manager: TokenManager,
     http: reqwest::Client,
 }
 
 impl Client {
-    pub async fn new() -> Result<Self, gcp_auth::Error> {
-        let auth = gcp_auth::init().await?;
+    pub async fn new() -> Result<Self, AuthError> {
         Ok(Self {
-            token: auth.get_token(&SCOPES).await?,
+            token_manager: TokenManager::new(&SCOPES).await?,
             http: reqwest::Client::new(),
         })
     }
 
     pub async fn object(
-        &self,
+        &mut self,
         bucket: &str,
         object: &str,
     ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
@@ -39,7 +39,7 @@ impl Client {
         let res = self
             .http
             .get(url)
-            .headers(self.headers())
+            .headers(self.headers().await?)
             .query(&[("alt", "media")])
             .send()
             .await?;
@@ -68,13 +68,15 @@ impl Client {
         Ok(url)
     }
 
-    fn headers(&self) -> HeaderMap {
+    async fn headers(&mut self) -> Result<HeaderMap, AuthError> {
         let mut header = HeaderMap::new();
         header.insert(
             reqwest::header::AUTHORIZATION,
-            format!("Bearer {}", self.token.as_str()).parse().unwrap(),
+            format!("Bearer {}", self.token_manager.get_token().await?.as_str())
+                .parse()
+                .unwrap(),
         );
-        header
+        Ok(header)
     }
 }
 
