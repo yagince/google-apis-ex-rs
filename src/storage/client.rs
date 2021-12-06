@@ -93,6 +93,11 @@ mod tests {
     )]
     #[case(
         "test-bucket",
+        Some("hoge/foo/bar.yaml"),
+        "https://storage.googleapis.com/storage/v1/b/test-bucket/o/hoge%2Ffoo%2Fbar.yaml"
+    )]
+    #[case(
+        "test-bucket",
         None,
         "https://storage.googleapis.com/storage/v1/b/test-bucket"
     )]
