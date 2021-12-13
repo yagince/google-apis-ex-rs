@@ -1,5 +1,5 @@
 use clap::Parser;
-use google_apis_ex::{kms::client::KmsClient, storage::client::Client};
+use google_apis_ex::{kms::client::KmsClient, pubsub::PubSubClient, storage::client::Client};
 
 #[derive(Parser)]
 struct Opts {
@@ -11,6 +11,7 @@ struct Opts {
 enum SubCommands {
     Storage(Storage),
     Kms(Kms),
+    Pubsub(Pubsub),
 }
 
 #[derive(Parser)]
@@ -50,6 +51,25 @@ struct KmsEncryptParams {
     data: String,
 }
 
+#[derive(Parser)]
+struct Pubsub {
+    #[clap(subcommand)]
+    subcmd: PubsubSubCommands,
+}
+
+#[derive(Parser)]
+enum PubsubSubCommands {
+    Publish(PubsubPublishParams),
+}
+
+#[derive(Parser)]
+struct PubsubPublishParams {
+    #[clap(short, long)]
+    topic: String,
+    #[clap(short, long)]
+    data: String,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Opts::parse();
@@ -84,6 +104,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
                 println!("decrypt success.");
                 println!("decrepted: {}", String::from_utf8(res.plaintext)?);
+            }
+        },
+        SubCommands::Pubsub(opts) => match opts.subcmd {
+            PubsubSubCommands::Publish(opts) => {
+                let mut client = PubSubClient::new().await?;
+                let res = client.publish(opts.topic, opts.data.as_bytes()).await?;
+                dbg!(res);
             }
         },
     }

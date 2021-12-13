@@ -60,14 +60,16 @@ impl PubSubClient {
         .await
     }
 
+    /// # Arguments
+    /// * `name` - in the format `projects/{project}/topics/{topic}`
     pub async fn publish(
         &mut self,
-        name: impl ToOwned<Owned = String>,
+        topic: impl ToOwned<Owned = String>,
         data: impl Into<Vec<u8>>,
     ) -> Result<PublishResponse, Error> {
         let request = self
             .construct_request(PublishRequest {
-                topic: name.to_owned(),
+                topic: topic.to_owned(),
                 messages: vec![PubsubMessage {
                     data: data.into(),
                     attributes: Default::default(),
