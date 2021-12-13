@@ -61,7 +61,7 @@ impl PubSubClient {
     }
 
     /// # Arguments
-    /// * `name` - in the format `projects/{project}/topics/{topic}`
+    /// * `topic` - in the format `projects/{project}/topics/{topic}`
     pub async fn publish(
         &mut self,
         topic: impl ToOwned<Owned = String>,
