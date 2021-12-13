@@ -87,11 +87,14 @@ impl PubSubClient {
 
     pub async fn pull(&mut self, subscription: &str) -> Result<PullResponse, Error> {
         let request = self
-            .construct_request(PullRequest {
-                subscription: subscription.to_owned(),
-                return_immediately: true,
-                max_messages: 100,
-            })
+            .construct_request(
+                #[allow(deprecated)]
+                PullRequest {
+                    subscription: subscription.to_owned(),
+                    return_immediately: true,
+                    max_messages: 100,
+                },
+            )
             .await?;
         let res = self.subscriber_client.pull(request).await?;
         Ok(res.into_inner())
