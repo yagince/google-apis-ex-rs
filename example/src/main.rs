@@ -60,6 +60,7 @@ struct Pubsub {
 #[derive(Parser)]
 enum PubsubSubCommands {
     Publish(PubsubPublishParams),
+    Pull(PubsubPullParams),
 }
 
 #[derive(Parser)]
@@ -68,6 +69,14 @@ struct PubsubPublishParams {
     topic: String,
     #[clap(short, long)]
     data: String,
+}
+
+#[derive(Parser)]
+struct PubsubPullParams {
+    #[clap(short, long)]
+    subscription: String,
+    #[clap(short, long)]
+    ack: bool,
 }
 
 #[tokio::main]
@@ -109,8 +118,25 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         SubCommands::Pubsub(opts) => match opts.subcmd {
             PubsubSubCommands::Publish(opts) => {
                 let mut client = PubSubClient::new().await?;
-                let res = client.publish(opts.topic, opts.data.as_bytes()).await?;
+                let res = client.publish(&opts.topic, opts.data.as_bytes()).await?;
                 dbg!(res);
+            }
+            PubsubSubCommands::Pull(opts) => {
+                let mut client = PubSubClient::new().await?;
+                let res = dbg!(client.pull(&opts.subscription).await?);
+                for message in res.received_messages.into_iter() {
+                    if let Some(mes) = message.message {
+                        dbg!(mes.message_id);
+                        let _ = dbg!(String::from_utf8(mes.data));
+
+                        if opts.ack {
+                            println!("Ack {:?}", message.ack_id);
+                            client
+                                .acknowledge(&opts.subscription, vec![message.ack_id])
+                                .await?;
+                        }
+                    }
+                }
             }
         },
     }

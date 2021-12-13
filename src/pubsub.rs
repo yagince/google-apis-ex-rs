@@ -8,8 +8,9 @@ use crate::{
     error::Error,
     proto::{
         google::pubsub::v1::{
-            publisher_client::PublisherClient, subscriber_client::SubscriberClient, PublishRequest,
-            PublishResponse, PubsubMessage, PullRequest, PullResponse,
+            publisher_client::PublisherClient, subscriber_client::SubscriberClient,
+            AcknowledgeRequest, PublishRequest, PublishResponse, PubsubMessage, PullRequest,
+            PullResponse,
         },
         TLS_CERT,
     },
@@ -65,7 +66,7 @@ impl PubSubClient {
     /// * `topic` - in the format `projects/{project}/topics/{topic}`
     pub async fn publish(
         &mut self,
-        topic: impl ToOwned<Owned = String>,
+        topic: &str,
         data: impl Into<Vec<u8>>,
     ) -> Result<PublishResponse, Error> {
         let request = self
@@ -84,10 +85,7 @@ impl PubSubClient {
         Ok(res.into_inner())
     }
 
-    pub async fn pull(
-        &mut self,
-        subscription: impl ToOwned<Owned = String>,
-    ) -> Result<PullResponse, Error> {
+    pub async fn pull(&mut self, subscription: &str) -> Result<PullResponse, Error> {
         let request = self
             .construct_request(PullRequest {
                 subscription: subscription.to_owned(),
@@ -97,5 +95,20 @@ impl PubSubClient {
             .await?;
         let res = self.subscriber_client.pull(request).await?;
         Ok(res.into_inner())
+    }
+
+    pub async fn acknowledge(
+        &mut self,
+        subscription: &str,
+        ack_ids: Vec<String>,
+    ) -> Result<(), Error> {
+        let request = self
+            .construct_request(AcknowledgeRequest {
+                subscription: subscription.to_owned(),
+                ack_ids: ack_ids,
+            })
+            .await?;
+        self.subscriber_client.acknowledge(request).await?;
+        Ok(())
     }
 }
