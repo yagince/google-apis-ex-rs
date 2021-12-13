@@ -114,18 +114,18 @@ impl KmsClient {
         key_name: &str,
         data: impl Into<Vec<u8>>,
     ) -> Result<EncryptResponse, Error> {
-        let request = Self::construct_request(
-            self,
-            EncryptRequest {
-                name: key_name.to_owned(),
-                plaintext: data.into(),
-                additional_authenticated_data: vec![],
-                plaintext_crc32c: None,
-                additional_authenticated_data_crc32c: None,
-            },
-            vec![("name", key_name)],
-        )
-        .await?;
+        let request = self
+            .construct_request(
+                EncryptRequest {
+                    name: key_name.to_owned(),
+                    plaintext: data.into(),
+                    additional_authenticated_data: vec![],
+                    plaintext_crc32c: None,
+                    additional_authenticated_data_crc32c: None,
+                },
+                vec![("name", key_name)],
+            )
+            .await?;
 
         let response = self.client.encrypt(request).await?;
         Ok(response.into_inner())
@@ -139,18 +139,18 @@ impl KmsClient {
         key_name: &str,
         data: impl Into<Vec<u8>>,
     ) -> Result<DecryptResponse, Error> {
-        let request = Self::construct_request(
-            self,
-            DecryptRequest {
-                name: key_name.to_owned(),
-                ciphertext: data.into(),
-                additional_authenticated_data: vec![],
-                ciphertext_crc32c: None,
-                additional_authenticated_data_crc32c: None,
-            },
-            vec![("name", key_name)],
-        )
-        .await?;
+        let request = self
+            .construct_request(
+                DecryptRequest {
+                    name: key_name.to_owned(),
+                    ciphertext: data.into(),
+                    additional_authenticated_data: vec![],
+                    ciphertext_crc32c: None,
+                    additional_authenticated_data_crc32c: None,
+                },
+                vec![("name", key_name)],
+            )
+            .await?;
 
         let response = self.client.decrypt(request).await?;
         Ok(response.into_inner())
