@@ -12,6 +12,7 @@ use crate::{
         },
         TLS_CERT,
     },
+    util::construct_request,
 };
 
 pub const DOMAIN_NAME: &str = "pubsub.googleapis.com";
@@ -51,14 +52,12 @@ impl PubSubClient {
         &mut self,
         request: T,
     ) -> Result<Request<T>, Error> {
-        let mut request = request.into_request();
-        let token = self.token_manager.get_token().await?.as_str();
-        let metadata = request.metadata_mut();
-        metadata.insert(
-            "authorization",
-            format!("Bearer {}", token).parse().unwrap(),
-        );
-        Ok(request)
+        construct_request(
+            request,
+            self.token_manager.get_token().await?.as_str(),
+            vec![],
+        )
+        .await
     }
 
     pub async fn publish(
