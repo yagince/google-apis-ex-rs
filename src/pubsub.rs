@@ -108,7 +108,7 @@ impl PubSubClient {
         let request = self
             .construct_request(AcknowledgeRequest {
                 subscription: subscription.to_owned(),
-                ack_ids: ack_ids,
+                ack_ids,
             })
             .await?;
         self.subscriber_client.acknowledge(request).await?;
