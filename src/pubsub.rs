@@ -8,7 +8,8 @@ use crate::{
     error::Error,
     proto::{
         google::pubsub::v1::{
-            publisher_client::PublisherClient, PublishRequest, PublishResponse, PubsubMessage,
+            publisher_client::PublisherClient, subscriber_client::SubscriberClient, PublishRequest,
+            PublishResponse, PubsubMessage, PullRequest, PullResponse,
         },
         TLS_CERT,
     },
@@ -25,27 +26,27 @@ pub const SCOPES: [&str; 2] = [
 pub struct PubSubClient {
     token_manager: TokenManager,
     publisher_client: PublisherClient<Channel>,
+    subscriber_client: SubscriberClient<Channel>,
 }
 
 impl PubSubClient {
     pub async fn new() -> Result<Self, Error> {
         Ok(Self {
             token_manager: TokenManager::new(&SCOPES).await?,
-            publisher_client: Self::publisher_client().await?,
+            publisher_client: PublisherClient::new(Self::channel().await?),
+            subscriber_client: SubscriberClient::new(Self::channel().await?),
         })
     }
 
-    async fn publisher_client() -> Result<PublisherClient<Channel>, Error> {
+    async fn channel() -> Result<Channel, Error> {
         let tls_config = ClientTlsConfig::new()
             .ca_certificate(Certificate::from_pem(TLS_CERT))
             .domain_name(DOMAIN_NAME);
 
-        let channel = Channel::from_static(ENDPOINT)
+        Ok(Channel::from_static(ENDPOINT)
             .tls_config(tls_config)?
             .connect()
-            .await?;
-
-        Ok(PublisherClient::new(channel))
+            .await?)
     }
 
     async fn construct_request<T: IntoRequest<T>>(
@@ -80,6 +81,21 @@ impl PubSubClient {
             })
             .await?;
         let res = self.publisher_client.publish(request).await?;
+        Ok(res.into_inner())
+    }
+
+    pub async fn pull(
+        &mut self,
+        subscription: impl ToOwned<Owned = String>,
+    ) -> Result<PullResponse, Error> {
+        let request = self
+            .construct_request(PullRequest {
+                subscription: subscription.to_owned(),
+                return_immediately: true,
+                max_messages: 100,
+            })
+            .await?;
+        let res = self.subscriber_client.pull(request).await?;
         Ok(res.into_inner())
     }
 }
