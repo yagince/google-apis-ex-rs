@@ -48,7 +48,6 @@ impl KmsClient {
 
         Ok(KeyManagementServiceClient::new(channel))
     }
-
     pub(crate) async fn construct_request<T: IntoRequest<T>>(
         &mut self,
         request: T,
@@ -65,18 +64,18 @@ impl KmsClient {
     /// # Arguments
     /// * `parent` - in the format `projects/*/locations/*`
     pub async fn list_key_rings(&mut self, parent: &str) -> Result<ListKeyRingsResponse, Error> {
-        let request = Self::construct_request(
-            self,
-            ListKeyRingsRequest {
-                parent: parent.to_owned(),
-                page_size: 100,
-                page_token: Default::default(),
-                filter: Default::default(),
-                order_by: Default::default(),
-            },
-            vec![("parent", parent)],
-        )
-        .await?;
+        let request = self
+            .construct_request(
+                ListKeyRingsRequest {
+                    parent: parent.to_owned(),
+                    page_size: 100,
+                    page_token: Default::default(),
+                    filter: Default::default(),
+                    order_by: Default::default(),
+                },
+                vec![("parent", parent)],
+            )
+            .await?;
 
         let response = self.client.list_key_rings(request).await?;
         Ok(response.into_inner())
@@ -88,19 +87,19 @@ impl KmsClient {
         &mut self,
         parent: &str,
     ) -> Result<ListCryptoKeysResponse, Error> {
-        let request = Self::construct_request(
-            self,
-            ListCryptoKeysRequest {
-                parent: parent.to_owned(),
-                page_size: 100,
-                page_token: Default::default(),
-                filter: Default::default(),
-                order_by: Default::default(),
-                version_view: 0,
-            },
-            vec![("parent", parent)],
-        )
-        .await?;
+        let request = self
+            .construct_request(
+                ListCryptoKeysRequest {
+                    parent: parent.to_owned(),
+                    page_size: 100,
+                    page_token: Default::default(),
+                    filter: Default::default(),
+                    order_by: Default::default(),
+                    version_view: 0,
+                },
+                vec![("parent", parent)],
+            )
+            .await?;
 
         let response = self.client.list_crypto_keys(request).await?;
         Ok(response.into_inner())
