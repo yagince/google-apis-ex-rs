@@ -17,6 +17,11 @@ pub mod google {
             include!("proto/google.storage.v2.rs");
         }
     }
+    pub mod pubsub {
+        pub mod v1 {
+            include!("proto/google.pubsub.v1.rs");
+        }
+    }
     pub mod cloud {
         pub mod kms {
             pub mod v1 {
