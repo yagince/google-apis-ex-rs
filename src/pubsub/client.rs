@@ -85,6 +85,8 @@ impl PubSubClient {
         Ok(res.into_inner())
     }
 
+    /// # Arguments
+    /// * `subscription` - in the format `projects/{project}/subscriptions/{subscription}`
     pub async fn pull(&mut self, subscription: &str) -> Result<PullResponse, Error> {
         let request = self
             .construct_request(
@@ -100,6 +102,9 @@ impl PubSubClient {
         Ok(res.into_inner())
     }
 
+    /// # Arguments
+    /// * `subscription` - in the format `projects/{project}/subscriptions/{subscription}`
+    /// * `ack_ids`      - acknowledge ids
     pub async fn acknowledge(
         &mut self,
         subscription: &str,
