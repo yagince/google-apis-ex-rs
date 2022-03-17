@@ -28,16 +28,6 @@ pub enum GoogleDriveError {
     },
 }
 
-// "{\n \"kind\": \"drive#file\",\n \"id\": \"1RmCMkyI6IT4-gXhgi04qjbyT0zq0HP3n\",\n \"name\": \"test.txt\",\n \"mimeType\": \"text/plain\"\n}\n"
-#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct File {
-    kind: String,
-    id: String,
-    name: String,
-    mime_type: String,
-}
-
 #[derive(PartialEq, Eq, Hash)]
 pub enum Scope {
     /// See, edit, create, and delete all of your Google Drive files
@@ -80,12 +70,21 @@ impl AsRef<str> for Scope {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize, Default)]
 #[serde(rename_all = "camelCase")]
-pub struct UploadFileMetadata {
+pub struct File {
+    pub kind: Option<String>,
+    pub id: Option<String>,
     pub name: String,
     pub mime_type: String,
+    pub description: Option<String>,
+    pub created_time: Option<String>,
+    pub modified_time: Option<String>,
+    #[serde(default)]
     pub parents: Vec<String>,
+    pub starred: Option<bool>,
+    pub viewed_by_me_time: Option<String>,
+    pub writers_can_share: Option<String>,
 }
 
 impl Client {
@@ -111,7 +110,7 @@ impl Client {
     pub async fn upload(
         &mut self,
         data: impl Into<Vec<u8>>,
-        metadata: UploadFileMetadata,
+        metadata: File,
     ) -> Result<File, Error> {
         let headers = self.headers().await?;
 

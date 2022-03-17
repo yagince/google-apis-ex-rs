@@ -3,7 +3,7 @@ use reqwest::{header::HeaderMap, StatusCode, Url};
 use crate::{
     drive::{
         client::{File, GoogleDriveError},
-        Client, UploadFileMetadata,
+        Client,
     },
     error::Error,
     mime,
@@ -17,7 +17,7 @@ pub async fn upload_file(
     http: &reqwest::Client,
     headers: HeaderMap,
     data: impl Into<Vec<u8>>,
-    metadata: UploadFileMetadata,
+    metadata: File,
 ) -> Result<File, Error> {
     let data = data.into();
     let url = resume_url(http, &data, headers.clone(), &metadata).await?;
@@ -29,7 +29,7 @@ async fn upload_request(
     url: Url,
     data: Vec<u8>,
     headers: HeaderMap,
-    metadata: &UploadFileMetadata,
+    metadata: &File,
 ) -> Result<File, Error> {
     Ok(http
         .put(url)
@@ -47,7 +47,7 @@ async fn resume_url(
     http: &reqwest::Client,
     data: &[u8],
     headers: HeaderMap,
-    metadata: &UploadFileMetadata,
+    metadata: &File,
 ) -> Result<Url, Error> {
     let res = resume_request(http, data, headers, metadata).await?;
     match res.status() {
@@ -72,7 +72,7 @@ async fn resume_request(
     http: &reqwest::Client,
     data: &[u8],
     headers: HeaderMap,
-    metadata: &UploadFileMetadata,
+    metadata: &File,
 ) -> Result<reqwest::Response, Error> {
     let resume_url = Client::build_uri(UPLOAD_PATH, &[("uploadType", "resumable")])?;
 

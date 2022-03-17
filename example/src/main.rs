@@ -1,6 +1,6 @@
 use clap::Parser;
 use google_apis_ex::{
-    drive::{self, UploadFileMetadata},
+    drive::{self, File},
     kms::client::KmsClient,
     mime,
     pubsub::PubSubClient,
@@ -169,10 +169,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 client
                     .upload(
                         data,
-                        UploadFileMetadata {
+                        File {
                             name: opts.name,
                             mime_type: mime::TEXT_PLAIN.to_string(),
                             parents: vec![opts.parent_id],
+                            ..Default::default()
                         },
                     )
                     .await?
