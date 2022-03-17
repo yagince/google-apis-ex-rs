@@ -10,8 +10,8 @@ use crate::{
 };
 
 const UPLOAD_PATH: &str = "upload/drive/v3/files";
-const HEADER_UPLOAD_CONTENT_TYPE: &'static str = "X-Upload-Content-Type";
-const HEADER_UPLOAD_CONTENT_LENGTH: &'static str = "X-Upload-Content-Length";
+const HEADER_UPLOAD_CONTENT_TYPE: &str = "X-Upload-Content-Type";
+const HEADER_UPLOAD_CONTENT_LENGTH: &str = "X-Upload-Content-Length";
 
 pub async fn upload_file(
     http: &reqwest::Client,
