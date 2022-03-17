@@ -1,5 +1,5 @@
-use reqwest::{header::HeaderMap, Url};
-use serde::Serialize;
+use reqwest::{header::HeaderMap, StatusCode, Url};
+use serde::{Deserialize, Serialize};
 use std::path::Path;
 
 use crate::{
@@ -14,6 +14,28 @@ const ENDPOINT: &str = "https://www.googleapis.com";
 pub struct Client {
     token_manager: TokenManager,
     http: reqwest::Client,
+}
+
+#[derive(thiserror::Error, Debug)]
+pub enum GoogleDriveError {
+    #[error("ResumeUrl not found in response headers. response: {response}")]
+    ResumeUrlNotFound { response: String },
+
+    #[error("status: {status} response: {response}")]
+    UnexpectedResponse {
+        status: StatusCode,
+        response: String,
+    },
+}
+
+// "{\n \"kind\": \"drive#file\",\n \"id\": \"1RmCMkyI6IT4-gXhgi04qjbyT0zq0HP3n\",\n \"name\": \"test.txt\",\n \"mimeType\": \"text/plain\"\n}\n"
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct File {
+    kind: String,
+    id: String,
+    name: String,
+    mime_type: String,
 }
 
 #[derive(PartialEq, Eq, Hash)]
@@ -90,9 +112,8 @@ impl Client {
         &mut self,
         data: impl Into<Vec<u8>>,
         metadata: UploadFileMetadata,
-    ) -> Result<(), Error> {
+    ) -> Result<File, Error> {
         let headers = self.headers().await?;
-        let data = data.into();
 
         upload_file(&self.http, headers, data, metadata).await
     }

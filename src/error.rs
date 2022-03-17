@@ -1,6 +1,9 @@
 use std::env;
 use std::io;
 
+use reqwest::header::ToStrError;
+
+use crate::drive::client::GoogleDriveError;
 use crate::storage::client::CloudStorageError;
 
 /// The main error-handling type.
@@ -36,6 +39,12 @@ pub enum Error {
     /// cloud storage API error.
     #[error("cloud storage api error: {0}")]
     CloudStorage(#[from] CloudStorageError),
+    /// Google Drive API error.
+    #[error("google drive api error: {0}")]
+    GooleDrive(#[from] GoogleDriveError),
+    /// HeaderValue is not string.
+    #[error("HeaderValue is not string: {0}")]
+    HeaderValueIsNotString(#[from] ToStrError),
 }
 
 /// The error type for value conversions.

@@ -165,16 +165,18 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             let mut client = drive::Client::new().await?;
             let data = std::fs::read(opts.input)?;
-            client
-                .upload(
-                    data,
-                    UploadFileMetadata {
-                        name: opts.name,
-                        mime_type: mime::TEXT_PLAIN.to_string(),
-                        parents: vec![opts.parent_id],
-                    },
-                )
-                .await?;
+            dbg!(
+                client
+                    .upload(
+                        data,
+                        UploadFileMetadata {
+                            name: opts.name,
+                            mime_type: mime::TEXT_PLAIN.to_string(),
+                            parents: vec![opts.parent_id],
+                        },
+                    )
+                    .await?
+            );
         }
     }
 

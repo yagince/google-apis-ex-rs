@@ -1,7 +1,10 @@
-use reqwest::{header::HeaderMap, Url};
+use reqwest::{header::HeaderMap, StatusCode, Url};
 
 use crate::{
-    drive::{Client, UploadFileMetadata},
+    drive::{
+        client::{File, GoogleDriveError},
+        Client, UploadFileMetadata,
+    },
     error::Error,
     mime,
 };
@@ -15,11 +18,65 @@ pub async fn upload_file(
     headers: HeaderMap,
     data: impl Into<Vec<u8>>,
     metadata: UploadFileMetadata,
-) -> Result<(), Error> {
-    let resume_url = Client::build_uri(UPLOAD_PATH, &[("uploadType", "resumable")])?;
+) -> Result<File, Error> {
     let data = data.into();
+    let url = resume_url(http, &data, headers.clone(), &metadata).await?;
+    upload_request(http, url, data, headers, &metadata).await
+}
 
-    let res = http
+async fn upload_request(
+    http: &reqwest::Client,
+    url: Url,
+    data: Vec<u8>,
+    headers: HeaderMap,
+    metadata: &UploadFileMetadata,
+) -> Result<File, Error> {
+    Ok(http
+        .put(url)
+        .headers(headers)
+        .header(reqwest::header::CONTENT_TYPE, &metadata.mime_type)
+        .header(reqwest::header::CONTENT_LENGTH, data.len())
+        .body(data)
+        .send()
+        .await?
+        .json()
+        .await?)
+}
+
+async fn resume_url(
+    http: &reqwest::Client,
+    data: &[u8],
+    headers: HeaderMap,
+    metadata: &UploadFileMetadata,
+) -> Result<Url, Error> {
+    let res = resume_request(http, data, headers, metadata).await?;
+    match res.status() {
+        StatusCode::OK => {
+            if let Some(x) = res.headers().get(reqwest::header::LOCATION) {
+                return Ok(x.to_str()?.parse()?);
+            }
+            return Err(GoogleDriveError::ResumeUrlNotFound {
+                response: res.text().await?,
+            }
+            .into());
+        }
+        _ => Err(GoogleDriveError::UnexpectedResponse {
+            status: res.status(),
+            response: res.text().await?,
+        }
+        .into()),
+    }
+}
+
+async fn resume_request(
+    http: &reqwest::Client,
+    data: &[u8],
+    headers: HeaderMap,
+    metadata: &UploadFileMetadata,
+) -> Result<reqwest::Response, Error> {
+    let resume_url = Client::build_uri(UPLOAD_PATH, &[("uploadType", "resumable")])?;
+
+    Ok(http
         .post(resume_url)
         .headers(headers.clone())
         .header(HEADER_UPLOAD_CONTENT_TYPE, &metadata.mime_type)
@@ -30,24 +87,5 @@ pub async fn upload_file(
         )
         .json(&metadata)
         .send()
-        .await?;
-
-    let url = dbg!(res)
-        .headers()
-        .get(reqwest::header::LOCATION)
-        .unwrap()
-        .to_str()
-        .unwrap()
-        .parse::<Url>()?;
-
-    let res = http
-        .put(url)
-        .headers(headers)
-        .header(reqwest::header::CONTENT_TYPE, &metadata.mime_type)
-        .header(reqwest::header::CONTENT_LENGTH, data.len())
-        .body(data)
-        .send()
-        .await?;
-    dbg!(dbg!(res).text().await?);
-    Ok(())
+        .await?)
 }
