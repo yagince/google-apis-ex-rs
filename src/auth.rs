@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use gcp_auth::{AuthenticationManager, Token};
 
 use crate::error::AuthError;
@@ -12,6 +14,17 @@ impl TokenManager {
     pub async fn new(scopes: &[&'static str]) -> Result<Self, AuthError> {
         Ok(Self {
             auth_manager: gcp_auth::init().await?,
+            token: None,
+            scopes: scopes.to_owned(),
+        })
+    }
+
+    pub async fn from_credential_file<T: AsRef<Path>>(
+        path: T,
+        scopes: &[&'static str],
+    ) -> Result<Self, AuthError> {
+        Ok(Self {
+            auth_manager: gcp_auth::from_credentials_file(path).await?,
             token: None,
             scopes: scopes.to_owned(),
         })
