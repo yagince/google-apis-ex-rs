@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -508,6 +508,10 @@ message PageInfo {
   string current_page = 1 [(google.api.resource_reference) = {
                              type: "dialogflow.googleapis.com/Page"
                            }];
+
+  // Always present for [WebhookRequest][google.cloud.dialogflow.cx.v3.WebhookRequest]. Ignored for [WebhookResponse][google.cloud.dialogflow.cx.v3.WebhookResponse].
+  // The display name of the current page.
+  string display_name = 4;
 
   // Optional for both [WebhookRequest][google.cloud.dialogflow.cx.v3.WebhookRequest] and [WebhookResponse][google.cloud.dialogflow.cx.v3.WebhookResponse].
   // Information about the form.

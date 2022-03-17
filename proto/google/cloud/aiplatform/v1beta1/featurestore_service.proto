@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC
+// Copyright 2022 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import "google/cloud/aiplatform/v1beta1/feature.proto";
 import "google/cloud/aiplatform/v1beta1/feature_monitoring_stats.proto";
 import "google/cloud/aiplatform/v1beta1/feature_selector.proto";
 import "google/cloud/aiplatform/v1beta1/featurestore.proto";
+import "google/cloud/aiplatform/v1beta1/featurestore_online_service.proto";
 import "google/cloud/aiplatform/v1beta1/io.proto";
 import "google/cloud/aiplatform/v1beta1/operation.proto";
 import "google/longrunning/operations.proto";
@@ -506,6 +507,9 @@ message ImportFeatureValuesRequest {
   // If not set, defaults to using 1 worker. The low count ensures minimal
   // impact on online serving performance.
   int32 worker_count = 11;
+
+  // If true, API doesn't start ingestion analysis pipeline.
+  bool disable_ingestion_analysis = 12;
 }
 
 // Response message for [FeaturestoreService.ImportFeatureValues][google.cloud.aiplatform.v1beta1.FeaturestoreService.ImportFeatureValues].
@@ -847,7 +851,12 @@ message UpdateEntityTypeRequest {
   //   * `description`
   //   * `labels`
   //   * `monitoring_config.snapshot_analysis.disabled`
-  //   * `monitoring_config.snapshot_analysis.monitoring_interval`
+  //   * `monitoring_config.snapshot_analysis.monitoring_interval_days`
+  //   * `monitoring_config.snapshot_analysis.staleness_days`
+  //   * `monitoring_config.import_features_analysis.state`
+  //   * `monitoring_config.import_features_analysis.anomaly_detection_baseline`
+  //   * `monitoring_config.numerical_threshold_config.value`
+  //   * `monitoring_config.categorical_threshold_config.value`
   google.protobuf.FieldMask update_mask = 2;
 }
 
@@ -1139,8 +1148,7 @@ message UpdateFeatureRequest {
   //
   //   * `description`
   //   * `labels`
-  //   * `monitoring_config.snapshot_analysis.disabled`
-  //   * `monitoring_config.snapshot_analysis.monitoring_interval`
+  //   * `disable_monitoring`
   google.protobuf.FieldMask update_mask = 2;
 }
 

@@ -3,7 +3,7 @@ proto_outdir = "./proto"
 [[dependencies]]
   target = "github.com/googleapis/googleapis"
   subgroup = ""
-  revision = "429d35c835fd8509302ca0e8031eab35a99e767e"
+  revision = "db9d2a3c5e2f7de55563e5658de318349358768f"
   branch = "master"
   path = ""
   ignores = ["./gapic", "./grafeas"]
