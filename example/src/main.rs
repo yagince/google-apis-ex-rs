@@ -1,5 +1,11 @@
 use clap::Parser;
-use google_apis_ex::{kms::client::KmsClient, pubsub::PubSubClient, storage::client::Client};
+use google_apis_ex::{
+    drive::{self, UploadFileMetadata},
+    kms::client::KmsClient,
+    mime,
+    pubsub::PubSubClient,
+    storage::client::Client,
+};
 
 #[derive(Parser)]
 struct Opts {
@@ -12,6 +18,7 @@ enum SubCommands {
     Storage(Storage),
     Kms(Kms),
     Pubsub(Pubsub),
+    Drive(Drive),
 }
 
 #[derive(Parser)]
@@ -79,6 +86,18 @@ struct PubsubPullParams {
     ack: bool,
 }
 
+#[derive(Parser)]
+struct Drive {
+    #[clap(short, long)]
+    name: String,
+    #[clap(short, long)]
+    parent_id: String,
+    #[clap(short, long)]
+    input: String,
+    #[clap(short, long)]
+    credential_path: Option<String>,
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Opts::parse();
@@ -139,6 +158,24 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 }
             }
         },
+        SubCommands::Drive(opts) => {
+            if let Some(path) = opts.credential_path.as_ref() {
+                std::env::set_var("GOOGLE_APPLICATION_CREDENTIALS", path);
+            }
+
+            let mut client = drive::Client::new().await?;
+            let data = std::fs::read(opts.input)?;
+            client
+                .upload(
+                    data,
+                    UploadFileMetadata {
+                        name: opts.name,
+                        mime_type: mime::TEXT_PLAIN.to_string(),
+                        parents: vec![opts.parent_id],
+                    },
+                )
+                .await?;
+        }
     }
 
     Ok(())
