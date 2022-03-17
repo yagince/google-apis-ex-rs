@@ -68,30 +68,22 @@ pub struct UploadFileMetadata {
 
 impl Client {
     pub async fn new() -> Result<Self, AuthError> {
-        Ok(Self {
-            token_manager: TokenManager::new(&[
-                "https://www.googleapis.com/auth/cloud-platform",
-                Scope::Full.as_ref(),
-                Scope::File.as_ref(),
-            ])
-            .await?,
-            http: reqwest::Client::new(),
-        })
+        Ok(Self::_new(
+            TokenManager::new(&[Scope::Full.as_ref()]).await?,
+        ))
     }
 
     pub async fn from_credential_file<T: AsRef<Path>>(path: T) -> Result<Self, AuthError> {
-        Ok(Self {
-            token_manager: TokenManager::from_credential_file(
-                path,
-                &[
-                    "https://www.googleapis.com/auth/cloud-platform",
-                    Scope::Full.as_ref(),
-                    Scope::File.as_ref(),
-                ],
-            )
-            .await?,
+        Ok(Self::_new(
+            TokenManager::from_credential_file(path, &[Scope::Full.as_ref()]).await?,
+        ))
+    }
+
+    fn _new(token_manager: TokenManager) -> Self {
+        Self {
+            token_manager,
             http: reqwest::Client::new(),
-        })
+        }
     }
 
     pub async fn upload(
