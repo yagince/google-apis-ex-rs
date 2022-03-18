@@ -1,3 +1,4 @@
+use once_cell::sync::Lazy;
 use reqwest::{header::HeaderMap, StatusCode, Url};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
@@ -9,7 +10,12 @@ use crate::{
 
 use super::handler::upload_file::upload_file;
 
-const ENDPOINT: &str = "https://www.googleapis.com";
+const DRIVE_API_ENDPOINT: &str = "https://www.googleapis.com";
+#[cfg(not(test))]
+pub const ENDPOINT: Lazy<String> = Lazy::new(|| DRIVE_API_ENDPOINT.to_owned());
+
+#[cfg(test)]
+pub const ENDPOINT: Lazy<String> = Lazy::new(|| mockito::server_url());
 
 pub struct Client {
     token_manager: TokenManager,
@@ -117,8 +123,12 @@ impl Client {
         upload_file(&self.http, headers, data, metadata).await
     }
 
-    pub(crate) fn build_uri(path: &str, params: &[(&str, &str)]) -> Result<Url, Error> {
-        let mut uri = Url::parse(ENDPOINT)?.join(path)?;
+    pub(crate) fn build_drive_uri(path: &str, params: &[(&str, &str)]) -> Result<Url, Error> {
+        Self::build_uri(&ENDPOINT, path, params)
+    }
+
+    pub(crate) fn build_uri(base: &str, path: &str, params: &[(&str, &str)]) -> Result<Url, Error> {
+        let mut uri = Url::parse(base)?.join(path)?;
         for (key, value) in params {
             uri.query_pairs_mut().append_pair(key, value);
         }
@@ -146,17 +156,21 @@ mod tests {
     #[test]
     fn test_build_uri() -> anyhow::Result<()> {
         assert_eq!(
-            Client::build_uri("hoge/goo.txt", &[])?,
+            Client::build_uri(DRIVE_API_ENDPOINT, "hoge/goo.txt", &[])?,
             Url::parse("https://www.googleapis.com/hoge/goo.txt")?
         );
 
         assert_eq!(
-            Client::build_uri("/hoge/goo.txt", &[])?,
+            Client::build_uri(DRIVE_API_ENDPOINT, "/hoge/goo.txt", &[])?,
             Url::parse("https://www.googleapis.com/hoge/goo.txt")?
         );
 
         assert_eq!(
-            dbg!(Client::build_uri("/hoge/goo.txt", &[("hoge", "foo")])?),
+            dbg!(Client::build_uri(
+                DRIVE_API_ENDPOINT,
+                "/hoge/goo.txt",
+                &[("hoge", "foo")]
+            )?),
             Url::parse("https://www.googleapis.com/hoge/goo.txt?hoge=foo")?
         );
 

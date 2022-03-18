@@ -74,7 +74,7 @@ async fn resume_request(
     headers: HeaderMap,
     metadata: &File,
 ) -> Result<reqwest::Response, Error> {
-    let resume_url = Client::build_uri(UPLOAD_PATH, &[("uploadType", "resumable")])?;
+    let resume_url = Client::build_drive_uri(UPLOAD_PATH, &[("uploadType", "resumable")])?;
 
     Ok(http
         .post(resume_url)
@@ -88,4 +88,50 @@ async fn resume_request(
         .json(&metadata)
         .send()
         .await?)
+}
+
+#[cfg(test)]
+mod tests {
+    use mockito::Matcher;
+    use pretty_assertions::assert_eq;
+
+    use super::*;
+
+    #[tokio::test]
+    async fn test_resume_url() -> anyhow::Result<()> {
+        let client = reqwest::Client::new();
+        let url = "https://hoge.com";
+        let metadata = File {
+            name: "test.rb".into(),
+            mime_type: "text/plain".into(),
+            ..Default::default()
+        };
+        let headers: HeaderMap = vec![(reqwest::header::AUTHORIZATION, "Bearer token".try_into()?)]
+            .into_iter()
+            .collect();
+        let data = [1, 2, 3];
+
+        let _mock = mockito::mock("POST", format!("/{}", UPLOAD_PATH).as_str())
+            .match_query(Matcher::UrlEncoded("uploadType".into(), "resumable".into()))
+            .match_header(reqwest::header::AUTHORIZATION.as_str(), "Bearer token")
+            .match_header(
+                reqwest::header::CONTENT_TYPE.as_str(),
+                mime::APPLICATION_JSON.as_ref(),
+            )
+            .match_header(HEADER_UPLOAD_CONTENT_TYPE, metadata.mime_type.as_str())
+            .match_header(
+                HEADER_UPLOAD_CONTENT_LENGTH,
+                data.len().to_string().as_str(),
+            )
+            .with_status(200)
+            .with_header(reqwest::header::LOCATION.as_str(), url)
+            .create();
+
+        let resumable_url = resume_url(&client, &data, headers, &metadata).await?;
+
+        _mock.assert();
+        assert_eq!(resumable_url, Url::parse(url)?);
+
+        Ok(())
+    }
 }
