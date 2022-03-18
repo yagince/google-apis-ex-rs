@@ -94,6 +94,7 @@ async fn resume_request(
 mod tests {
     use mockito::Matcher;
     use pretty_assertions::assert_eq;
+    use serde_json::json;
 
     use super::*;
 
@@ -131,6 +132,59 @@ mod tests {
 
         _mock.assert();
         assert_eq!(resumable_url, Url::parse(url)?);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_upload_file() -> anyhow::Result<()> {
+        let client = reqwest::Client::new();
+        let url = [mockito::server_url().as_str(), "/upload_file"].join("");
+        let metadata = File {
+            name: "test.rb".into(),
+            mime_type: "text/plain".into(),
+            ..Default::default()
+        };
+        let headers: HeaderMap = vec![(reqwest::header::AUTHORIZATION, "Bearer token".try_into()?)]
+            .into_iter()
+            .collect();
+        let data = [1, 2, 3];
+
+        let resume_mock = mockito::mock("POST", format!("/{}", UPLOAD_PATH).as_str())
+            .match_query(Matcher::UrlEncoded("uploadType".into(), "resumable".into()))
+            .match_header(reqwest::header::AUTHORIZATION.as_str(), "Bearer token")
+            .with_status(200)
+            .with_header(reqwest::header::LOCATION.as_str(), &url)
+            .create();
+
+        let upload_mock = mockito::mock("PUT", "/upload_file")
+            .match_header(reqwest::header::AUTHORIZATION.as_str(), "Bearer token")
+            .match_body(data.clone().to_vec())
+            .with_status(200)
+            .with_body(
+                json!({
+                    "kind": "drive#file",
+                    "id": "asehdgjfhkjkasdflkajsdfalksjdfa",
+                    "name": metadata.name.clone(),
+                    "mimeType": metadata.mime_type.clone(),
+                })
+                .to_string(),
+            )
+            .create();
+
+        let file = upload_file(&client, headers, data, metadata.clone()).await?;
+
+        resume_mock.assert();
+        upload_mock.assert();
+
+        assert_eq!(
+            file,
+            File {
+                kind: Some("drive#file".into()),
+                id: Some("asehdgjfhkjkasdflkajsdfalksjdfa".into()),
+                ..metadata
+            }
+        );
 
         Ok(())
     }
