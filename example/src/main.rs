@@ -1,3 +1,5 @@
+use std::fs;
+
 use clap::Parser;
 use google_apis_ex::{
     drive::{self, File},
@@ -23,12 +25,34 @@ enum SubCommands {
 
 #[derive(Parser)]
 struct Storage {
+    #[clap(subcommand)]
+    subcmd: StorageCommands,
+}
+
+#[derive(Parser)]
+enum StorageCommands {
+    Get(StorageGetParams),
+    Upload(StorageUploadParams),
+}
+
+#[derive(Parser)]
+struct StorageGetParams {
     #[clap(short, long)]
     bucket: String,
     #[clap(short, long)]
     object_id: String,
     #[clap(long)]
     output: Option<String>,
+}
+
+#[derive(Parser)]
+struct StorageUploadParams {
+    #[clap(short, long)]
+    bucket: String,
+    #[clap(short, long)]
+    object_id: String,
+    #[clap(short, long)]
+    input: String,
 }
 
 #[derive(Parser)]
@@ -103,16 +127,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let opts = Opts::parse();
 
     match opts.subcmd {
-        SubCommands::Storage(opts) => {
-            let mut client = Client::new().await?;
-            let data = client.object(&opts.bucket, &opts.object_id).await?;
+        SubCommands::Storage(opts) => match opts.subcmd {
+            StorageCommands::Get(opts) => {
+                let mut client = Client::new().await?;
+                let data = client.object(&opts.bucket, &opts.object_id).await?;
 
-            if let Some(output_path) = opts.output {
-                std::fs::write(output_path, data)?;
-            } else {
-                dbg!(data);
+                if let Some(output_path) = opts.output {
+                    std::fs::write(output_path, data)?;
+                } else {
+                    dbg!(data);
+                }
             }
-        }
+            StorageCommands::Upload(opts) => {
+                let mut client = Client::new().await?;
+                let data = fs::read_to_string(opts.input)?;
+
+                client
+                    .create_object(
+                        &opts.bucket,
+                        &opts.object_id,
+                        data.as_bytes(),
+                        "application/json",
+                    )
+                    .await?;
+            }
+        },
         SubCommands::Kms(opts) => match opts.subcmd {
             KmsCommands::ListKeyRings(opts) => {
                 let mut client = KmsClient::new().await?;

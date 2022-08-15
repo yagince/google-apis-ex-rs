@@ -8,6 +8,7 @@ use crate::{
 use super::object::ObjectResource;
 
 const ENDPOINT: &str = "https://storage.googleapis.com/storage/v1";
+const ENDPOINT_UPLOAD: &str = "https://storage.googleapis.com/upload/storage/v1";
 const SCOPES: [&str; 2] = [
     "https://www.googleapis.com/auth/cloud-platform",
     "https://www.googleapis.com/auth/devstorage.full_control",
@@ -62,7 +63,7 @@ impl Client {
         object: impl Into<Vec<u8>>,
         mime_type: impl AsRef<str>,
     ) -> Result<ObjectResource, Error> {
-        let url = Self::build_uri(bucket, Some(""))?;
+        let url = Self::build_upload_uri(bucket, Some(""))?;
         let data = object.into();
 
         let res = self
@@ -91,7 +92,22 @@ impl Client {
     }
 
     fn build_uri<T: AsRef<str>>(bucket: &str, object: Option<T>) -> Result<Url, url::ParseError> {
-        let mut url = Url::parse(ENDPOINT)?;
+        Self::build_uri_by_endpoint(ENDPOINT, bucket, object)
+    }
+
+    fn build_upload_uri<T: AsRef<str>>(
+        bucket: &str,
+        object: Option<T>,
+    ) -> Result<Url, url::ParseError> {
+        Self::build_uri_by_endpoint(ENDPOINT_UPLOAD, bucket, object)
+    }
+
+    fn build_uri_by_endpoint<T: AsRef<str>>(
+        endpoint: &str,
+        bucket: &str,
+        object: Option<T>,
+    ) -> Result<Url, url::ParseError> {
+        let mut url = Url::parse(endpoint)?;
         url.path_segments_mut().unwrap().push("b").push(bucket);
 
         if let Some(object) = object {
